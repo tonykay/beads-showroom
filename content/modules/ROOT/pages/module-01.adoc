@@ -1,0 +1,219 @@
+= Module 1: The Problem & The Fix
+:navtitle: The Problem & The Fix
+
+[NOTE]
+====
+*Estimated time: 35 minutes*
+====
+
+== The Problem: Agent Amnesia
+
+Every time you start a new AI-assisted development session, you repeat yourself.
+You explain what the project does.
+You explain what's in progress.
+You explain why you made a decision last week that seemed obvious at the time.
+You explain what the next step is.
+
+Your agent isn't bad at its job — it's genuinely capable. But it walked into the room with no memory of the last conversation, the last commit message, or the issue you were halfway through fixing.
+This is the *session boundary problem*.
+
+The typical workarounds — a `NOTES.md`, a long system prompt, a context file you manually update — all share the same flaw: they're maintained by a human who forgets to update them, and they don't track history.
+When you need to know _why_ you switched approaches two weeks ago, a flat text file won't tell you.
+
+The session boundary problem compounds over time.
+Projects accumulate invisible debt: decisions that aren't recorded, half-finished work with no clear status, context that only lives in one developer's head.
+Bring an AI agent in and it inherits the worst of that — with none of the intuition a human developer builds up.
+
+What you need is a memory system that:
+
+* Lives in the repository, not in someone's head or a private notes file
+* Tracks issues and decisions with stable identifiers that work across branches and machines
+* Can generate a structured context dump your agent can consume at the start of every session
+
+That's what Beads is.
+
+== What Beads Is
+
+Beads is a git-backed task and memory system designed for AI-assisted development workflows.
+The short version: it's an issue tracker that lives inside your repository and is queryable by both humans and agents.
+
+=== Under the Hood
+
+Beads stores its data in a https://docs.dolthub.com/[Dolt] database embedded in a `.beads/` directory at the root of your repo.
+Dolt is "git for data" — a SQL database with a git-like commit log.
+Every issue you create, update, or close is a commit in that database.
+The `.beads/` directory is committed to your git repo, so the entire issue history travels with the code.
+
+This means:
+
+* Branch and merge your issues the same way you branch and merge code
+* Clone the repo and get the full issue history
+* Collaborators see the same state — no external service required
+
+=== Anatomy of a Beads Issue
+
+Every issue gets a short hash ID derived from the repo name and a content hash — for example, `beads-practice-a3f`.
+These IDs are:
+
+* Human-readable — short enough to type, meaningful enough to recognize
+* Agent-safe — stable across machines and clones, no sequential integer conflicts
+* Collision-resistant — different repos produce different prefixes
+
+=== Key Concepts
+
+`bd`:: The Beads CLI. All commands start with `bd`.
+`.beads/`:: The directory where the Dolt database lives. Committed to git alongside your code.
+Issue ID:: A short hash prefix like `myproject-a3f`. Stable across machines and branches.
+`bd prime`:: Generates a structured session context dump for your AI agent. Run it at the start of every session.
+Dolt:: The git-for-data engine powering Beads storage. You don't need to interact with it directly.
+
+=== What `bd prime` Does
+
+`bd prime` reads the current state of your Beads database and prints structured context: open issues, claimed work, recent decisions, and any session notes.
+You paste that output (or pipe it) into your agent at the start of a session.
+Your agent now knows what's in flight, what's blocked, and what decisions were made — without you explaining anything.
+
+This is the core loop that makes Beads useful. You'll work through it in depth in xref:module-02.adoc[].
+
+== Lab: Your First Beads Workflow
+
+In this lab you will initialize Beads in a practice project, create an issue, inspect it, and close it.
+The goal is to run the full create→close cycle and see how it commits to git.
+
+=== Step 1: Verify Your Install
+
+Confirm `bd` is on your PATH:
+
+[source,bash,role="execute"]
+----
+bd --version
+----
+
+You should see output like:
+
+----
+beads v0.x.x
+----
+
+[TIP]
+====
+If `bd` is not found or the command fails, go back to xref:index.adoc[] and follow the install instructions for your platform before continuing.
+====
+
+=== Step 2: Initialize Beads in a Practice Project
+
+Create a fresh directory to practice in:
+
+[source,bash,role="execute"]
+----
+mkdir ~/beads-practice && cd ~/beads-practice
+git init
+----
+
+Now initialize Beads:
+
+[source,bash,role="execute"]
+----
+bd init
+----
+
+`bd init` does three things:
+
+. Creates the `.beads/` directory and initializes the Dolt database inside it
+. Writes a default `.beads/config.yaml` with your project name and preferences
+. Installs git hooks in `.git/hooks/` so Beads can sync on commit and checkout
+
+Check that `.beads/` is now tracked by git:
+
+[source,bash,role="execute"]
+----
+git status
+----
+
+You will see `.beads/` listed as new files staged for commit.
+The database is part of your repository from this point forward.
+
+=== Step 3: Create Your First Issue
+
+[source,bash,role="execute"]
+----
+bd create --title="Add user authentication" --description="Users need to log in. Implement JWT-based auth with refresh tokens." --type=feature --priority=2
+----
+
+Beads will print the new issue with its hash ID — something like:
+
+----
+Created issue beads-practice-a3f
+  Title:    Add user authentication
+  Type:     feature
+  Priority: medium
+  Status:   open
+----
+
+Note the ID in the first line (`beads-practice-a3f` in this example).
+Your ID will be different — write it down or keep the terminal open, you will use it in the next steps.
+
+Priority values map as follows:
+
+[cols="1,1"]
+|===
+|Value |Meaning
+
+|0 |critical
+|1 |high
+|2 |medium
+|3 |low
+|4 |backlog
+|===
+
+=== Step 4: View the Issue
+
+Substitute your actual hash ID from Step 3:
+
+[source,bash,role="execute"]
+----
+bd show beads-practice-a3f
+----
+
+`bd show` prints the full issue record: title, description, type, priority, status, timestamps, and any linked notes.
+This is the same view your agent gets when it queries an issue by ID.
+
+=== Step 5: Close the Issue
+
+[source,bash,role="execute"]
+----
+bd close beads-practice-a3f --reason="Completed JWT auth implementation"
+----
+
+The `--reason` flag records _why_ the issue was closed, not just that it was.
+That reason is part of the git-committed record — if you ever need to know what the resolution was, it's in the history.
+
+Verify the issue is closed:
+
+[source,bash,role="execute"]
+----
+bd list --status=closed
+----
+
+You should see your issue listed with status `closed` and the reason you provided.
+
+== Check Your Understanding
+
+Here is what happened in this lab:
+
+* `bd init` created a `.beads/` directory containing a Dolt database, and that directory is tracked by git
+* You created an issue using `bd create` and got back a stable hash ID
+* You inspected the issue with `bd show` — the same command an agent uses to read issue context
+* You closed the issue with a recorded reason using `bd close`
+* Every one of those actions is a commit in the Dolt database inside `.beads/` — it survives branches, clones, and collaborators
+
+You now have a working Beads install and have run the full create→close cycle.
+
+[IMPORTANT]
+====
+The `.beads/` directory must be committed to git for Beads to be useful across machines and collaborators. Never add it to `.gitignore`.
+====
+
+== What's Next
+
+xref:module-02.adoc[] covers the daily loop: how to use `bd prime` to give your agent session context, how to claim and update issues as you work, and how to build the habit of closing the loop at the end of each session.

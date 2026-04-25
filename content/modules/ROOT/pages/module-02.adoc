@@ -1,0 +1,213 @@
+= Module 2: The Daily Loop
+:navtitle: The Daily Loop
+
+[NOTE]
+====
+*Estimated time: 35 minutes*
+====
+
+Beads only works if it becomes a reflex, not a chore.
+This module teaches you the five-step loop that structures every work session — whether you're driving or your AI agent is.
+
+== The Habit Loop
+
+The daily loop is five steps:
+
+----
+create → ready → claim → close → remember
+----
+
+Each step has a single, clear purpose.
+
+*create* — File an issue before writing code, not after.
+If it's worth doing, it's worth tracking.
+Retroactive tracking is a lie you tell yourself.
+
+*ready* — `bd ready` shows you what's unblocked and available to work on.
+This is your (and your agent's) morning briefing.
+No issue, no work.
+
+*claim* — `bd update <id> --claim` marks you as the owner and sets status to `in_progress`.
+Agents use this too.
+It prevents duplicate work and makes state visible across sessions.
+
+*close* — `bd close <id>` marks the work done.
+The `--reason` flag leaves a breadcrumb that survives context resets.
+
+*remember* — `bd remember "insight"` stores cross-session knowledge that outlives any individual issue.
+Use it for architectural decisions, gotchas, and anything you'd have to re-explain from scratch.
+
+[IMPORTANT]
+====
+The discipline is filing the issue *before* starting the work.
+That one habit is 80% of the value.
+====
+
+== Command Reference
+
+Quick reference for the five core commands:
+
+[cols="1,2",options="header"]
+|===
+| Command | Purpose
+
+| `bd create --title="..." --description="..." --type=task --priority=2`
+| File a new issue
+
+| `bd ready`
+| Show unblocked, unclaimed issues
+
+| `bd update <id> --claim`
+| Claim an issue (sets owner + in_progress)
+
+| `bd close <id> --reason="..."`
+| Mark complete with a note
+
+| `bd remember "insight"`
+| Store a cross-session memory
+|===
+
+[NOTE]
+====
+Priority values are integers: `0` = critical, `1` = high, `2` = medium, `3` = low, `4` = backlog.
+Do not use words like `"high"` or `"medium"` — they will not be accepted.
+====
+
+== Lab: A Full Agentic Work Session
+
+*Time: ~20 minutes*
+
+Use the `beads-practice` project from xref:module-01.adoc[] (any git repo with `bd init` already run will work).
+
+*Scenario:* You're starting a work session on a small project.
+You need to add a config file parser and write tests for it.
+Before touching any code, you file your issues.
+
+=== Step 1: File your issues before you start
+
+[source,bash,role="execute"]
+----
+bd create --title="Implement config file parser" --description="Parse YAML config files and expose settings as typed structs. Needed before any other feature work." --type=feature --priority=1
+----
+
+[source,bash,role="execute"]
+----
+bd create --title="Write tests for config parser" --description="Unit tests for the config parser. Should cover valid configs, missing keys, and malformed YAML." --type=task --priority=2
+----
+
+Both issues are assigned hash IDs by Beads.
+Substitute your actual IDs in the steps below.
+
+=== Step 2: Find your work
+
+[source,bash,role="execute"]
+----
+bd ready
+----
+
+Both issues appear — neither has dependencies, so both are unblocked.
+In a real session, `bd ready` is the first command you run.
+
+=== Step 3: Claim the first issue
+
+[source,bash,role="execute"]
+----
+bd update <config-parser-issue-id> --claim
+----
+
+Status moves to `in_progress`.
+Your name is recorded as the owner.
+If an AI agent picks up this session later, it will see that this issue is already claimed.
+
+=== Step 4: Do the work
+
+For this lab, skip the actual implementation.
+In a real session, this is where you (or your agent) writes the code.
+
+[TIP]
+====
+This is the only step where Beads isn't involved.
+The system tracks intent and outcome — it doesn't supervise the work itself.
+====
+
+=== Step 5: Close with a reason
+
+[source,bash,role="execute"]
+----
+bd close <config-parser-issue-id> --reason="Implemented YAML parser using gopkg.in/yaml.v3, supports env var override"
+----
+
+The `--reason` text is stored with the issue.
+It survives context resets and is visible in `bd show`.
+Always leave a reason — future you (or your agent) will thank you.
+
+=== Step 6: Check what's ready next
+
+[source,bash,role="execute"]
+----
+bd ready
+----
+
+The tests issue is now visible.
+In the next section you'll learn how to make it depend on the parser so it only appears here after the parser is closed.
+
+=== Step 7: Store an architectural memory
+
+[source,bash,role="execute"]
+----
+bd remember "Config parser uses gopkg.in/yaml.v3 — we chose this over viper to avoid the heavy dependency tree"
+----
+
+This decision would otherwise be lost at the end of the session.
+Now it's retrievable across any future session, by you or any agent.
+
+=== Step 8: Verify the memory was stored
+
+[source,bash,role="execute"]
+----
+bd memories config
+----
+
+You should see your memory returned in the results.
+The search is keyword-based — use terms that match what you'd naturally ask for later.
+
+== Dependencies (Bonus)
+
+If the tests issue genuinely cannot be started until the parser is done, express that as a dependency instead of just hoping you do things in order.
+
+[source,bash,role="execute"]
+----
+bd dep add <tests-issue-id> <config-parser-issue-id>
+----
+
+Now the tests issue will not appear in `bd ready` until the config parser issue is closed.
+This is how you express sequencing without micromanaging execution order.
+
+[NOTE]
+====
+Dependencies affect `bd ready` output.
+A blocked issue stays hidden until all its dependencies are closed.
+You do not have to remember the order — the system enforces it.
+====
+
+== Check Your Understanding
+
+Before moving on, verify you can answer these:
+
+* What command starts every work session?
+* What does claiming an issue do, and why does it matter for agents?
+* What is the difference between closing an issue with `--reason` and storing a `bd remember`?
+* How do you prevent a dependent issue from appearing as available work before its prerequisite is done?
+
+*Key takeaways:*
+
+- `bd ready` is your session starting point — for humans and AI agents alike
+- Claiming prevents duplicate work and makes in-progress state visible
+- `bd remember` creates memories that survive session boundaries; close reasons do not
+- Dependencies let you express order without blocking every issue by hand
+
+After this module, you can run a full agentic work session using Beads as the task backbone.
+
+== What's Next
+
+xref:module-03.adoc[] covers how to let Claude Code drive this entire loop automatically — filing issues, claiming work, closing tasks, and storing memories without you prompting each step.

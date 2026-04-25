@@ -1,0 +1,276 @@
+= Module 4: Keeping It Healthy
+:navtitle: Keeping It Healthy
+
+[NOTE]
+====
+*Estimated time: 25 minutes*
+====
+This module covers what happens when you skip maintenance — and the five commands that prevent the most common Beads failures.
+
+Before diving in, make sure you have completed xref:module-03.adoc[].
+
+== Small Habits, Big Payoffs
+
+The daily loop from previous modules gives you momentum.
+Maintenance keeps that momentum from turning into mess.
+
+Two failure modes show up repeatedly in real projects:
+
+**Issue rot**:: Hundreds of stale or orphaned issues accumulate until `bd ready` returns so much noise that you stop trusting it.
+
+**Database bloat**:: The Dolt DB grows past ~500 active issues and query performance degrades noticeably.
+
+Both are easy to prevent.
+Five commands — learned in the next two sections — are everything you need.
+
+== Key Maintenance Tools
+
+=== bd doctor
+
+`bd doctor` is a health check for your Beads installation.
+Run it whenever something feels off, or as part of a routine check.
+
+It inspects:
+
+* Git hooks — are `pre-commit`, `prepare-commit-msg`, and friends installed and executable?
+* Dolt sync status — is your local DB in sync with the remote?
+* Orphaned dependencies — issues that depend on missing or deleted blockers
+* General database health — corruption checks, schema version
+
+[source,bash,role="execute"]
+----
+bd doctor
+----
+
+[TIP]
+====
+`bd doctor` is read-only with no side effects — safe to run at any time without fear of changing anything.
+====
+
+=== bd stale
+
+`bd stale` surfaces issues that have had no recent activity.
+The default threshold is 14 days; you can configure it per project.
+
+[source,bash,role="execute"]
+----
+bd stale
+----
+
+Use the output to decide: defer, close, or leave each item.
+Stale issues that still matter should get an update so the clock resets.
+Stale issues that no longer matter should be closed.
+
+=== bd orphans
+
+`bd orphans` finds issues with broken dependency chains — for example, an issue that depends on another issue that was deleted or closed without resolution.
+
+[source,bash,role="execute"]
+----
+bd orphans
+----
+
+Orphaned dependencies signal a workflow gap.
+The blocker was resolved (or abandoned) without the dependent issue being updated.
+`bd orphans` surfaces the gap so you can act on it.
+
+=== bd compact
+
+`bd compact` archives closed issues to keep the live database fast.
+Closed issues move to a compacted history file; open issues stay in the active DB.
+
+[source,bash,role="execute"]
+----
+bd compact
+----
+
+Rule of thumb: run `bd compact` when `bd stats` shows 400 or more closed issues.
+The Dolt DB degrades past roughly 500 active (non-closed) issues.
+
+=== bd --version and upgrading
+
+[source,bash,role="execute"]
+----
+bd --version
+----
+
+[IMPORTANT]
+====
+Beads recommends a weekly or bi-weekly upgrade cadence.
+The tool is actively developed — check for updates frequently.
+====
+
+[tabs]
+====
+macOS Homebrew::
++
+--
+[source,bash,role="execute"]
+----
+brew upgrade gastownhall/tap/beads
+----
+--
+Linux / Windows WSL::
++
+--
+[source,bash,role="execute"]
+----
+curl -fsSL https://raw.githubusercontent.com/gastownhall/beads/main/install.sh | bash
+----
+--
+====
+
+== Lab
+
+Use the `beads-practice` project from the earlier modules for this lab.
+
+=== Step 1: Run bd doctor
+
+[source,bash,role="execute"]
+----
+bd doctor
+----
+
+Read through the output carefully.
+It reports on hook status, Dolt sync, and any detected anomalies.
+If everything is healthy you will see all green.
+If anything is flagged, the output tells you what to fix.
+
+=== Step 2: Check your stats
+
+[source,bash,role="execute"]
+----
+bd stats
+----
+
+This shows open, closed, and blocked counts.
+It gives you a concrete sense of where your DB stands relative to the ~500-issue threshold.
+
+=== Step 3: Surface stale issues
+
+Create a placeholder issue that we can treat as dormant:
+
+[source,bash,role="execute"]
+----
+bd create --title="Investigate caching strategy" --description="Research Redis vs in-memory caching for the session store. Low priority placeholder." --type=task --priority=4
+----
+
+Now run:
+
+[source,bash,role="execute"]
+----
+bd stale
+----
+
+In a real project this output lists issues that haven't been touched recently.
+For each one, decide: defer it, close it, or update it to reset the staleness clock.
+
+=== Step 4: Simulate an orphaned dependency
+
+Create two issues — a tests issue and a deploy issue:
+
+[source,bash,role="execute"]
+----
+bd create --title="Write integration tests" --description="Full integration tests for the API layer." --type=task --priority=2
+----
+
+[source,bash,role="execute"]
+----
+bd create --title="Deploy to staging" --description="Deploy to the staging environment for QA sign-off." --type=task --priority=2
+----
+
+Note the IDs returned for each issue, then add a dependency (deploy blocks on tests):
+
+[source,bash,role="execute"]
+----
+bd dep add <deploy-issue-id> <tests-issue-id>
+----
+
+Now close the tests issue:
+
+[source,bash,role="execute"]
+----
+bd close <tests-issue-id>
+----
+
+Check for orphans:
+
+[source,bash,role="execute"]
+----
+bd orphans
+----
+
+Because the blocker (tests) is now closed, the deploy issue's dependency is resolved and the deploy issue is unblocked.
+In real workflows `bd orphans` catches the noisier case: a blocker that was deleted or superseded without cleanly resolving the dependent issue.
+
+=== Step 5: Check your version
+
+[source,bash,role="execute"]
+----
+bd --version
+----
+
+Compare the output against the latest release on the Beads GitHub page.
+If you are behind, follow the upgrade path in the next step.
+
+=== Step 6: Upgrade
+
+[tabs]
+====
+macOS Homebrew::
++
+--
+[source,bash,role="execute"]
+----
+brew upgrade gastownhall/tap/beads
+----
+--
+Linux / Windows WSL::
++
+--
+[source,bash,role="execute"]
+----
+curl -fsSL https://raw.githubusercontent.com/gastownhall/beads/main/install.sh | bash
+----
+--
+====
+
+== Your Maintenance Checklist
+
+Keep this checklist somewhere accessible — a README comment, a recurring calendar event, or a pinned Beads issue.
+
+**Weekly:**
+
+* `bd doctor` — catch problems before they become blockers
+* `bd stale` — review dormant issues and act on them
+
+**When `bd stats` shows 400+ closed issues:**
+
+* `bd compact` — archive old closed issues and keep the active DB fast
+
+**Before every PR:**
+
+* `bd preflight` — runs lint, stale check, and orphan check together in one pass
+
+**Periodically:**
+
+* `bd --version` — check your version and upgrade if you are behind
+
+== Check Your Understanding
+
+After this module you should be able to:
+
+* Run `bd doctor` as your first diagnostic step when anything feels wrong
+* Use `bd stale` regularly to keep the issue list clean and trustworthy
+* Recognize orphaned dependencies and resolve them with `bd orphans`
+* Keep the active database under ~500 items using `bd compact` on a regular cadence
+* Check your Beads version and upgrade using your platform's package manager
+
+[NOTE]
+====
+*Exit outcome:* You have a maintenance checklist and know how to diagnose the most common Beads problems before they slow you down.
+====
+
+== What's Next
+
+Head to xref:bonus.adoc[] to connect Beads to GitHub — linking issues to pull requests and enabling cross-tool issue sync.

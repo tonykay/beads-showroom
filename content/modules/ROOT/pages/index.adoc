@@ -1,0 +1,113 @@
+= Beads: Git-Backed Memory for Your Coding Agent
+:navtitle: Course Overview
+
+Stop losing context. Start shipping smarter.
+
+Every AI coding session starts the same way — you re-explain the project, re-list open tasks, re-share context your agent had yesterday.
+Beads fixes that.
+It's a git-backed agentic memory system that gives your AI coding agent persistent, structured context across sessions — stored in your repo, versioned with your code, and ready at the start of every session without you lifting a finger.
+
+This course takes you from zero to a fully configured Beads workflow in under three hours.
+You'll learn how to install and use Beads, build a daily task loop, wire it into Claude Code, and keep the whole system healthy over time.
+No prior Beads or Dolt experience required.
+
+== What You'll Learn
+
+. Install and initialize Beads in any project
+. Use `bd create`, `bd ready`, `bd update`, and `bd close` as your daily task loop
+. Configure Claude Code to prime Beads context automatically at session start
+. Keep your Beads installation healthy with `bd doctor`, cleanup, and upgrade commands
+. (Bonus) Connect Beads to a GitHub repo and link issues to pull requests
+
+== Prerequisites
+
+* Comfortable with git and a terminal
+* No Beads or Dolt experience needed — this course starts from scratch
+* Claude Code is recommended but not required for Modules 1 and 2; it is required for Module 3
+
+== Course Modules
+
+[cols="1,4,1",options="header"]
+|===
+| Module | Title | Time
+
+| 1
+| xref:module-01.adoc[The Problem & The Fix]
+| ~35 min
+
+| 2
+| xref:module-02.adoc[The Daily Loop]
+| ~35 min
+
+| 3
+| xref:module-03.adoc[Claude Code as Your Beads Partner]
+| ~40 min
+
+| 4
+| xref:module-04.adoc[Keeping It Healthy]
+| ~25 min
+
+| Bonus
+| xref:bonus.adoc[Integrating with GitHub]
+| ~30 min
+
+| *Total*
+|
+| *~2h 45min*
+|===
+
+== Before You Begin
+
+=== Install Beads
+
+[tabs]
+====
+macOS (Homebrew)::
++
+--
+Install Beads via Homebrew:
+
+[source,bash,role="execute"]
+----
+brew install gastownhall/tap/beads
+----
+--
+
+Linux / WSL (curl)::
++
+--
+Install Beads using the install script:
+
+[source,bash,role="execute"]
+----
+curl -fsSL https://raw.githubusercontent.com/gastownhall/beads/main/install.sh | bash
+----
+--
+====
+
+After installation, verify it worked:
+
+[source,bash,role="execute"]
+----
+bd --version
+----
+
+=== Install Claude Code
+
+Claude Code is required for Module 3 (Claude Code as Your Beads Partner) and the Bonus module.
+Modules 1 and 2 work with any terminal and git — no Claude Code needed.
+
+Install Claude Code from https://claude.ai/code[claude.ai/code].
+
+[NOTE]
+====
+If you plan to work through the full course, install Claude Code before starting Module 3.
+You do not need it to complete Modules 1 and 2.
+====
+
+== Key Resources
+
+* https://gastownhall.github.io/beads[Beads Documentation]
+* https://github.com/gastownhall/beads[Beads on GitHub]
+* https://yuv.ai/blog/beads-git-backed-memory-for-ai-agents-that-actually-remembers[Beads Blog Post — yuv.ai]
+* https://steve-yegge.medium.com/beads-best-practices-2db636b9760c[Beads Best Practices — Steve Yegge]

@@ -1,0 +1,265 @@
+= Module 3: Claude Code as Your Beads Partner
+:navtitle: Claude Code as Your Partner
+
+[NOTE]
+====
+*Estimated time: 40 minutes*
+====
+
+Modules 1 and 2 gave you the tools. Module 3 is where it clicks.
+
+Even with a great task system, you still have to brief your agent at the start of every session: "Here's what we're working on. Here are the open issues. Here's the decision we made last week." That manual briefing is friction — and friction becomes the reason the system falls apart.
+
+`bd prime` combined with Claude Code's hook system eliminates that briefing entirely. By the end of this module, Claude Code will walk into every session already knowing your project's open work — without you typing a word.
+
+== The Real Payoff
+
+The problem isn't the task tracker. The problem is the handoff between sessions.
+
+You close your terminal on Tuesday with two issues in progress, a key architectural decision locked in memory, and a clear next step. You open it Thursday and your agent is blank. You spend five minutes explaining the context. Your agent spends the first exchange asking clarifying questions. By the time you're moving, you've lost your momentum.
+
+Beads solves the storage half of this problem — issues and memories persist across sessions. `bd prime` + Claude Code hooks solve the delivery half — that context gets injected into Claude automatically before the first message of every session.
+
+The result: Claude Code opens knowing what's open, what's blocked, and what decisions have been made. Your first message can be "continue the work" instead of "let me catch you up."
+
+== What `bd prime` Outputs
+
+`bd prime` generates a structured context block designed to be consumed by an AI agent as a session opener.
+
+Run it in any initialized project:
+
+[source,bash,role="execute"]
+----
+bd prime
+----
+
+The output includes:
+
+* *Open issues* — issues in `ready`, `in_progress`, or `blocked` state, each with its ID, title, status, and priority
+* *Recent memories* — insights stored with `bd remember`, newest first
+* *The project's issue prefix* — so the agent knows this project's namespace
+* *Key command reminder* — `bd ready`, `bd update`, `bd close`, `bd remember`
+
+The output is plain text structured for readability by a language model. It does not require the agent to run additional commands to understand the project's state — all the essential context is in one block.
+
+[TIP]
+====
+Run `bd prime` manually at the start of a session any time you want to orient yourself before writing code. It is useful for humans too.
+====
+
+== The CLAUDE.md Pattern
+
+Claude Code reads `CLAUDE.md` at startup and treats its contents as standing instructions for the project. This is the simplest integration point for Beads.
+
+Open or create `.claude/CLAUDE.md` in your project root and add a Beads workflow section:
+
+[source,markdown]
+----
+## Beads Workflow
+
+This project uses beads for issue tracking. At the start of each session:
+- Run `bd prime` to see open work
+- Use `bd create` for new tasks (never TodoWrite)
+- Close issues with `bd close` when work is complete
+----
+
+[TIP]
+====
+`CLAUDE.md` is read by Claude Code at startup. Instructions here override Claude's defaults for this project. Any workflow rule you put here — "never use TodoWrite," "always run tests before closing an issue" — will hold across all sessions without re-stating it.
+====
+
+The `CLAUDE.md` pattern is a good starting point but requires Claude to actively run `bd prime` when instructed. The hook approach in the next section makes that automatic.
+
+== SessionStart Hooks
+
+Claude Code supports hooks — commands that run automatically at specific points in the session lifecycle. The `SessionStart` hook fires once, before the first user message, and its output is injected into Claude's context.
+
+This is the mechanism that automates your project briefing.
+
+=== Adding the Hook
+
+The hook configuration lives in `.claude/settings.json` in your project directory. Create or edit that file to add the following:
+
+[source,json]
+----
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bd prime"
+          }
+        ]
+      }
+    ]
+  }
+}
+----
+
+[IMPORTANT]
+====
+Do not add a blank line after `====` in admonition blocks in your own Asciidoc — it breaks attribute substitution. The same rule applies here in `settings.json`: the JSON must be valid. Validate it before relying on it.
+====
+
+When Claude Code starts a new session in this directory, it runs `bd prime` and injects the output into the context window before your first message arrives. Claude reads open issues and recent memories as part of its startup — no prompting required.
+
+=== Verifying the File
+
+Check that the settings file is in place and contains valid JSON:
+
+[source,bash,role="execute"]
+----
+cat .claude/settings.json
+----
+
+[source,bash,role="execute"]
+----
+cat .claude/settings.json | python3 -m json.tool
+----
+
+If `python3 -m json.tool` exits cleanly and prints the formatted JSON, the file is valid.
+
+[NOTE]
+====
+`.claude/settings.json` is project-scoped — it only applies when Claude Code is launched in this directory. For hooks that apply across all your projects, add the same configuration to `~/.claude/settings.json` in your home directory.
+====
+
+== Lab: Wiring It Up
+
+This lab uses a project where you have already run `bd init` — the `beads-practice` project from Module 2 works perfectly, or any other initialized repository.
+
+*Total estimated lab time: 20 minutes*
+
+=== Step 1: Check for an Existing `.claude` Directory
+
+[source,bash,role="execute"]
+----
+ls -la .claude/ 2>/dev/null || echo "No .claude directory yet"
+----
+
+If the directory does not exist, create it:
+
+[source,bash,role="execute"]
+----
+mkdir -p .claude
+----
+
+=== Step 2: Create the Settings File
+
+Create `.claude/settings.json` with the `SessionStart` hook. Copy this block exactly:
+
+[source,json]
+----
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bd prime"
+          }
+        ]
+      }
+    ]
+  }
+}
+----
+
+=== Step 3: Validate the JSON
+
+[source,bash,role="execute"]
+----
+cat .claude/settings.json | python3 -m json.tool
+----
+
+You should see the formatted JSON echoed back with a clean exit. A parse error here means a missing brace or comma — fix it before moving on.
+
+=== Step 4: Store Memories for the Next Session
+
+`bd remember` stores persistent knowledge that survives session boundaries. Add a couple of entries that a future Claude session can draw on:
+
+[source,bash,role="execute"]
+----
+bd remember "The config parser uses gopkg.in/yaml.v3 - chosen for minimal deps"
+----
+
+[source,bash,role="execute"]
+----
+bd remember "Always run bd ready before starting work each session"
+----
+
+These entries will appear in the output of `bd prime` the next time a session starts.
+
+=== Step 5: Create an Open Issue for Claude to Find
+
+[source,bash,role="execute"]
+----
+bd create --title="Refactor config loader to support multiple file formats" --description="Extend the YAML config parser to also support JSON and TOML. This is a follow-on to the initial parser implementation." --type=feature --priority=2
+----
+
+Note the issue ID returned. It will appear in `bd prime` output as a ready issue.
+
+=== Step 6: Start a New Claude Code Session
+
+Close Claude Code and reopen it in this directory. Because the `SessionStart` hook is now configured, `bd prime` runs automatically before your first message.
+
+[TIP]
+====
+Verify that the hook fired by asking Claude: "What open issues do you see?" Claude should list the issue you just created, along with the memories you stored — without you providing any additional context.
+====
+
+=== Step 7: Have Claude Run the Daily Loop
+
+Ask Claude the following:
+
+____
+Check what's ready to work on and claim the config refactor issue.
+____
+
+Watch it run `bd ready`, identify the issue, and execute `bd update <id> --claim` — all driven by the Beads context it received at startup. You did not have to explain the project, the task tracker, or the issue naming convention. The hook handled all of that.
+
+== Cross-Session Memory Recall
+
+Memory stored with `bd remember` is queryable both from the CLI and through Claude's context.
+
+Search your stored memories by keyword:
+
+[source,bash,role="execute"]
+----
+bd memories parser
+----
+
+This returns the memory about `gopkg.in/yaml.v3` you stored earlier, along with its timestamp.
+
+Now open Claude Code (the `SessionStart` hook will prime it) and ask:
+
+____
+Do you know what library we use for config parsing and why?
+____
+
+Claude should answer from the stored memory — the library name, the rationale, and when it was recorded. No re-briefing. No digging through chat history. The knowledge was stored once and is now permanently available to any session in this project.
+
+[NOTE]
+====
+Memories are stored in the Dolt database under `.beads/` and are committed to your repository. This means memories travel with the repo — if you clone this project on another machine, the memories come with it.
+====
+
+== Check Your Understanding
+
+After this module you should be able to:
+
+* Explain what `bd prime` outputs and why it is structured for AI consumption
+* Add a `SessionStart` hook to `.claude/settings.json` that runs `bd prime` automatically
+* Use `bd remember` to store knowledge that persists across session boundaries
+* Verify that Claude Code is receiving Beads context by asking it what open issues it sees
+
+The exit outcome for this module: *Claude Code automatically knows the project's open work at the start of every session, without manual re-briefing.*
+
+== What's Next
+
+xref:module-04.adoc[] covers keeping your Beads installation healthy over time — running `bd doctor`, managing issue volume, and handling the common failure modes before they become problems.

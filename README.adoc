@@ -1,0 +1,76 @@
+= Beads: Git-Backed Memory for Your Coding Agent
+:toc: macro
+:toc-title: Contents
+
+_Stop losing context. Start shipping smarter._
+
+A self-paced developer course teaching https://github.com/gastownhall/beads[Beads] — the git-backed agentic memory system — to developers who use Claude Code or any AI coding agent.
+
+toc::[]
+
+== What This Course Covers
+
+[cols="1,4,1",options="header"]
+|===
+| Module | Title | Time
+| 1 | The Problem & The Fix | ~35 min
+| 2 | The Daily Loop | ~35 min
+| 3 | Claude Code as Your Beads Partner | ~40 min
+| 4 | Keeping It Healthy | ~25 min
+| Bonus | Integrating with GitHub | ~30 min
+| *Total* | | *~2h 45min*
+|===
+
+== Learning Outcomes
+
+By completing this course you will be able to:
+
+. Install and initialize Beads in any project
+. Use `bd create`, `bd ready`, `bd update`, and `bd close` as your daily task loop
+. Configure Claude Code to prime Beads context automatically at session start
+. Keep your Beads installation healthy with `bd doctor`, cleanup, and upgrades
+. *(Bonus)* Connect Beads to a GitHub repo and link issues to pull requests
+
+== Prerequisites
+
+* Comfortable with git and a terminal
+* No Beads or Dolt experience needed
+* Claude Code recommended (required for Module 3) — free tier works
+* macOS, Linux, or Windows WSL
+
+== Repo Structure
+
+----
+content/
+  modules/ROOT/
+    nav.adoc              # sidebar navigation
+    pages/
+      index.adoc          # course overview + install instructions
+      module-01.adoc      # The Problem & The Fix
+      module-02.adoc      # The Daily Loop
+      module-03.adoc      # Claude Code as Your Beads Partner
+      module-04.adoc      # Keeping It Healthy
+      bonus.adoc          # Integrating with GitHub
+site.yml                  # Antora playbook
+ui-config.yml             # Showroom UI (full-width, no right pane)
+----
+
+== Local Preview
+
+Preview the site locally with the Antora viewer container:
+
+[source,sh]
+----
+podman run --rm --name antora -v $PWD:/antora -p 8080:8080 -i -t ghcr.io/juliaaano/antora-viewer
+----
+
+On SELinux systems, append `:z` to the volume mount.
+Then open http://localhost:8080 in your browser.
+
+== Key Resources
+
+* https://gastownhall.github.io/beads[Beads Documentation]
+* https://github.com/gastownhall/beads[Beads on GitHub]
+* https://yuv.ai/blog/beads-git-backed-memory-for-ai-agents-that-actually-remembers[Beads Blog Post]
+* https://steve-yegge.medium.com/beads-best-practices-2db636b9760c[Beads Best Practices — Steve Yegge]
+* https://antora.org[Antora] — the static site generator powering this course

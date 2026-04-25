@@ -1,0 +1,11 @@
+---
+type: showroom
+
+default_width: 100
+persist_url_state: true
+
+view_switcher:
+  enabled: false
+  default_mode: content
+
+tabs: []

@@ -1,0 +1,10 @@
+name: beads-course
+title: Beads Developer Course
+version: ~
+nav:
+  - modules/ROOT/nav.adoc
+
+asciidoc:
+  attributes:
+    experimental: true
+    page-pagination: true

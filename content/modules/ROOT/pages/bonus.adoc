@@ -1,0 +1,212 @@
+= Bonus: Integrating with GitHub
+:navtitle: Integrating with GitHub
+
+You made it to the bonus module. Modules xref:module-01.adoc[1] through xref:module-04.adoc[4] cover everything you need for a healthy Beads workflow. This module covers one more thing: surfacing that work on GitHub so your teammates and code reviewers can see it.
+
+[NOTE]
+====
+*Estimated time: 30 minutes*
+====
+
+== Beads Meets GitHub
+
+Beads is local-first. Your issues live in git, travel with your repo, and work perfectly without a GitHub account. But most teams use GitHub Issues for stakeholder visibility and PR reviews. This module bridges the two.
+
+By the end you'll be able to:
+
+* Configure Beads to know your GitHub org and repo
+* Push a Beads issue to GitHub Issues so teammates can see it
+* Link an open PR to a Beads issue so `bd show` surfaces it
+
+What this is *not*:
+
+* Not a full two-way real-time sync — that's a team Dolt remote feature and is out of scope here
+* Not a replacement for GitHub Issues — it's a bridge
+
+The pattern is: you own the issue in Beads, GitHub Issues gets a read-friendly copy, and PRs link back to both.
+
+== Prerequisites
+
+Before you start, confirm you have:
+
+* https://cli.github.com[GitHub CLI] (`gh`) installed and authenticated
+* A GitHub repository you can push to
+* Beads initialized in a local clone of that repo
+
+Check that `gh` is ready:
+
+[source,bash,role="execute"]
+----
+gh auth status
+----
+
+If you're not authenticated yet:
+
+[source,bash,role="execute"]
+----
+gh auth login
+----
+
+Follow the prompts — `gh` will open a browser window and handle the OAuth flow. Come back here once `gh auth status` shows your username.
+
+== Configure Beads for GitHub
+
+Tell Beads which repo to talk to:
+
+[source,bash,role="execute"]
+----
+bd config set github.org your-github-username
+bd config set github.repo your-repo-name
+----
+
+Verify the config took effect:
+
+[source,bash,role="execute"]
+----
+bd config list
+----
+
+You should see `github.org` and `github.repo` in the output.
+
+[TIP]
+====
+These settings are stored in `.beads/config`, scoped to this project and committed to git. Anyone who clones the repo gets the same GitHub integration automatically.
+====
+
+== Lab: Pushing Issues and Linking PRs
+
+Use any GitHub repo you own, or fork one for this exercise. The steps below use placeholders — substitute your own values as you go.
+
+=== Step 1: Configure GitHub integration
+
+[source,bash,role="execute"]
+----
+bd config set github.org <your-github-username>
+bd config set github.repo <your-repo-name>
+----
+
+=== Step 2: Create a Beads issue to push
+
+[source,bash,role="execute"]
+----
+bd create --title="Add rate limiting to API endpoints" --description="Implement per-user rate limiting on all public API endpoints. Limit: 100 requests/minute. Return 429 with Retry-After header." --type=feature --priority=2
+----
+
+Note your issue ID from the output — it will look something like `myproject-b7c`.
+
+=== Step 3: Push the issue to GitHub Issues
+
+[source,bash,role="execute"]
+----
+bd github push <your-issue-id>
+----
+
+This creates a GitHub Issue in your configured repo. Beads records the `github.issue_number` on the local issue so the two stay linked.
+
+=== Step 4: View the linked issue
+
+[source,bash,role="execute"]
+----
+bd show <your-issue-id>
+----
+
+The GitHub Issue URL now appears in the output. Open it in the browser to confirm it landed:
+
+[source,bash,role="execute"]
+----
+gh issue view <github-issue-number> --web
+----
+
+=== Step 5: Create a branch and open a PR
+
+[source,bash,role="execute"]
+----
+git checkout -b feature/rate-limiting
+----
+
+[source,bash,role="execute"]
+----
+git commit --allow-empty -m "WIP: rate limiting implementation"
+----
+
+[source,bash,role="execute"]
+----
+git push -u origin feature/rate-limiting
+----
+
+[source,bash,role="execute"]
+----
+gh pr create --title "Add rate limiting to API endpoints" --body "Implements #<github-issue-number>" --draft
+----
+
+Note the PR number from the output.
+
+=== Step 6: Link the PR to your Beads issue
+
+[source,bash,role="execute"]
+----
+bd github link-pr <your-issue-id> <pr-number>
+----
+
+=== Step 7: Verify the two-way relationship
+
+[source,bash,role="execute"]
+----
+bd show <your-issue-id>
+----
+
+The output now shows both the GitHub Issue URL and the linked PR. On the GitHub side:
+
+[source,bash,role="execute"]
+----
+gh pr view <pr-number>
+----
+
+The PR description references the GitHub Issue number, creating the link GitHub's UI understands — the issue gets a "linked pull request" badge automatically.
+
+=== Step 8: Clean up (optional)
+
+Close the PR and the Beads issue when you're done with the exercise:
+
+[source,bash,role="execute"]
+----
+gh pr close <pr-number>
+----
+
+[source,bash,role="execute"]
+----
+bd close <your-issue-id> --reason="Lab exercise complete — rate limiting feature demonstrated"
+----
+
+== Working with `bd` and `gh` Together
+
+A few guidelines to keep the two tools from stepping on each other:
+
+* `bd` manages your local task graph; `gh` manages GitHub state — they have different jobs
+* Don't use `gh issue close` for issues you track in Beads — close them with `bd close` so the local graph stays consistent
+* Use `gh pr` freely — Beads tracks the PR link, not the PR state, so there's no conflict
+
+[TIP]
+====
+For a clean PR workflow, file the Beads issue first (`bd create`), then open the branch, then create the PR (`gh pr create`), then link back with `bd github link-pr`. Doing it in that order means the Beads issue exists before anything references it.
+====
+
+== Check Your Understanding
+
+A quick recap of what you configured and why:
+
+* `bd config set github.org` / `github.repo` — tells Beads which GitHub repo to talk to
+* `bd github push` — creates a GitHub Issue from a Beads issue, recording the link in both directions
+* `bd github link-pr` — connects a PR to a Beads issue for traceability across your task graph and GitHub's code review UI
+* `bd show` — surfaces the GitHub Issue URL and linked PR in a single view, so you don't have to jump between tools to get the full picture
+
+Exit outcome: you can surface Beads work in GitHub and link code reviews back to the issues that motivated them. Teammates and reviewers get GitHub visibility; you keep the local-first workflow.
+
+---
+
+*You've completed the course.* The core skills live in Modules xref:module-01.adoc[1] through xref:module-04.adoc[4] — come back to this bonus module when you're ready to surface Beads work for teammates or code reviewers on GitHub.
+
+*Key resources:*
+
+* Beads documentation: https://gastownhall.github.io/beads[gastownhall.github.io/beads]
+* GitHub CLI docs: https://cli.github.com/manual[cli.github.com/manual]

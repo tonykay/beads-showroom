@@ -1,0 +1,16 @@
+* xref:index.adoc[Course Overview]
+
+.Module 1 — The Problem & The Fix
+* xref:module-01.adoc[The Problem & The Fix]
+
+.Module 2 — The Daily Loop
+* xref:module-02.adoc[The Daily Loop]
+
+.Module 3 — Claude Code as Your Partner
+* xref:module-03.adoc[Claude Code as Your Partner]
+
+.Module 4 — Keeping It Healthy
+* xref:module-04.adoc[Keeping It Healthy]
+
+.Bonus
+* xref:bonus.adoc[Integrating with GitHub]
