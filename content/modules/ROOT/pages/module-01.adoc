@@ -92,7 +92,7 @@ bd --version
 You should see output like:
 
 ----
-beads v0.x.x
+bd version 1.x.x
 ----
 
 [TIP]
