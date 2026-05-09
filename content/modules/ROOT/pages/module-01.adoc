@@ -117,11 +117,35 @@ Now initialize Beads:
 bd init
 ----
 
-`bd init` does three things:
+`bd init` will ask you two questions:
 
-. Creates the `.beads/` directory and initializes the Dolt database inside it
-. Writes a default `.beads/config.yaml` with your project name and preferences
+----
+✓ Initialized git repository
+Repository ID: 693e8437
+Clone ID: b83a8dc873c384c6
+Contributing to someone else's repo? [y/N]: N
+
+▶ Auto-export keeps .beads/issues.jsonl up to date after every write command.
+  This is useful for viewers (bv) and git-based sync workflows.
+
+Enable auto-export? [Y/n]: Y
+----
+
+**Contributing to someone else's repo?** — Answer *N* for your own projects. Answering *Y* sets you up as a contributor on an existing Beads repo (different clone ID, shared issue namespace).
+
+**Enable auto-export?** — Answer *Y* (the default). This keeps `.beads/issues.jsonl` updated after every `bd` command. The JSONL file is what makes your issues visible to other tools and git-based workflows.
+
+Under the hood, `bd init`:
+
+. Creates the `.beads/` directory with an embedded https://www.dolthub.com/[Dolt] database inside it — no separate database server needed
+. Generates a *Repository ID* (shared by all clones) and a *Clone ID* (unique to this checkout)
+. Writes `.beads/config.yaml` with your project name and preferences
 . Installs git hooks in `.git/hooks/` so Beads can sync on commit and checkout
+
+[NOTE]
+====
+Beads uses Dolt in *embedded mode* — the database engine runs inside `bd` itself. There is no server to install or manage. For team setups with shared remotes, Dolt can also run as a server, but that is outside the scope of this course.
+====
 
 Check that `.beads/` is now tracked by git:
 
